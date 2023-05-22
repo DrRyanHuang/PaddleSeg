@@ -71,5 +71,4 @@ from .upernet_vit_adapter import UPerNetViTAdapter
 from .lpsnet import LPSNet
 from .maskformer import MaskFormer
 from .segnext import SegNeXt
-from .knet import KNet
 from .pp_mobileseg import PPMobileSeg
