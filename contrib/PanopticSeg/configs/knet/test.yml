@@ -1,0 +1,508 @@
+num_classes: &num_classes 133
+ignore_index: &ignore_index 255
+label_divisor: &label_divisor 1000
+mean: &mean [0.485, 0.456, 0.406]
+std: &std [0.229, 0.224, 0.225]
+iters: &iters 368750
+batch_size: &batch_size 4
+
+
+
+train_dataset:
+  # type: COCO
+  type: CocoPanopticDataset
+  ann_file: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/annotations/panoptic_train2017.json
+  img_prefix: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/images/train2017/
+  seg_prefix: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/annotations/panoptic_train2017/
+  pipeline: 
+
+      - type: LoadImageFromFile
+      - type: LoadPanopticAnnotations
+        with_bbox: True
+        with_mask: True
+        with_seg: True
+      - type: Resize
+        # img_scale: [(1333, 640), (1333, 800)]
+        img_scale:
+            - [1333, 640]
+            - [1333, 800]
+        multiscale_mode: range
+        keep_ratio: True
+      - type: RandomFlip
+        flip_ratio: 0.5
+      - type: Normalize
+        mean: [123.675, 116.28, 103.53]
+        std: [58.395, 57.12, 57.375]
+        to_rgb: True
+      - type: Pad
+        size_divisor: 32
+      - type: DefaultFormatBundle
+      - type: Collectt
+        keys: 
+          - img
+          - gt_bboxes
+          - gt_labels
+          - gt_masks
+          - gt_semantic_seg
+
+
+
+
+  # dataset_root: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO
+  # separator:
+  # transforms:
+  #   - type: ConvertRGBToID
+  #   - type: RandomHorizontalFlip
+  #   - type: ResizeRangeScaling
+  #     min_value: 100
+  #     max_value: 2048
+  #   - type: RandomPaddingCrop
+  #     crop_size: &crop_size [1024, 1024]
+  #     im_padding_value: 0
+  #   - type: GenerateMaskFormerTrainTargets
+  #   - type: Normalize
+  #     mean: *mean
+  #     std: *std
+  #   - type: Collect
+  #     keys: 
+  #       - img
+  #       - label
+  #       - img_path
+  #       - lab_path
+  #       - img_h
+  #       - img_w
+  #       - gt_ids
+  #       - gt_masks
+  # mode: train
+  # file_list: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/train_list.txt
+  # json_path: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/annotations/panoptic_train2017.json
+  # label_divisor: *label_divisor
+  # num_classes: *num_classes
+  # no_collation_keys:
+  #   - gt_ids
+  #   - gt_masks
+  # ignore_index: *ignore_index
+
+
+
+val_dataset:
+  # type: COCO
+  type: CocoPanopticDataset
+  ann_file: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/annotations/panoptic_val2017.json
+  img_prefix: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/images/val2017/
+  seg_prefix: /media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/dataset/COCO/annotations/panoptic_val2017/
+  pipeline:
+    - type: LoadImageFromFile
+    - type: MultiScaleFlipAug
+      img_scale: 
+          - [1333, 800]
+      flip: False,
+      transforms:
+          - type: Resize
+            keep_ratio: True
+          - type: RandomFlip
+          - type: Normalize
+            mean: [123.675, 116.28, 103.53]
+            std: [58.395, 57.12, 57.375]
+            to_rgb: True
+          - type: Pad
+            size_divisor: 32
+          # - type: ImageToTensor
+          #   keys: img
+          - type: Collectt
+            keys:
+              - img
+
+
+model:
+
+  type: KNet
+  backbone:
+    # type='ResNet',
+    depth: 50
+    num_stages: 4
+    out_indices: [0, 1, 2, 3]
+    frozen_stages: -1
+    norm_cfg:
+        type: BN
+        requires_grad: True
+    norm_eval: True
+    style: pytorch
+    # init_cfg:
+    #     type: Pretrained
+    #     checkpoint: null
+
+  neck:
+    # type='FPN'
+    in_channels: [256, 512, 1024, 2048]
+    out_channels: 256
+    start_level: 0
+    add_extra_convs: 'on_input'
+    num_outs: 4
+
+  rpn_head:
+    # type='ConvKernelHead',
+    num_classes: 133
+    cat_stuff_mask: True
+    conv_kernel_size: 1
+    feat_downsample_stride: 2
+    feat_refine_stride: 1
+    feat_refine: False
+    use_binary: True
+    num_loc_convs: 1
+    num_seg_convs: 1
+    conv_normal_init: True
+    localization_fpn:
+      # type='SemanticFPNWrapper',
+      in_channels: 256
+      feat_channels: 256
+      out_channels: 256
+      start_level: 0
+      end_level: 3
+      upsample_times: 2
+      positional_encoding:
+        # type='SinePositionalEncoding', 
+        num_feats: 128
+        normalize: True
+      cat_coors: False
+      cat_coors_level: 3
+      fuse_by_cat: False
+      return_list: False
+      num_aux_convs: 1
+      norm_cfg: 
+        type: 'GN'
+        num_groups: 32
+        requires_grad: True
+    num_proposals: 100
+    proposal_feats_with_obj: True
+    xavier_init_kernel: False
+    kernel_init_std: 1
+    num_cls_fcs: 1
+    in_channels: 256
+    # feat_transform_cfg: None
+    loss_rank:
+        type: CrossEntropyLoss
+        use_sigmoid: False
+        loss_weight: 0.1
+    loss_seg:
+        type: FocalLoss
+        use_sigmoid: True
+        gamma: 2.0
+        alpha: 0.25
+        loss_weight: 1.0
+    loss_mask:
+        type: CrossEntropyLoss
+        use_sigmoid: True
+        loss_weight: 1.0
+    loss_dice:
+        type: DiceLoss
+        loss_weight: 4.0
+    assigner_config: 
+        type: MaskHungarianAssigner
+        cls_cost: 
+          type: FocalLossCost
+          weight: 2.0
+        dice_cost:
+          type: DiceCost
+          weight: 4.0
+          pred_act: True
+        mask_cost: 
+          type: MaskCost
+          weight: 1.0
+          pred_act: True
+
+    cfg_pos_weight: 1
+
+  roi_head:
+    # type='KernelIterHead',
+    do_panoptic: True
+    num_stages: 3
+    stage_loss_weights: [1, 1, 1]
+    proposal_feature_channel: 256
+    mask_head:
+      - type: KernelUpdateHead
+        num_classes: 133
+        num_ffn_fcs: 2
+        num_heads: 8
+        num_cls_fcs: 1
+        num_mask_fcs: 1
+        feedforward_channels: 2048
+        in_channels: 256
+        out_channels: 256
+        dropout: 0.0
+        mask_thr: 0.5
+        conv_kernel_size: 1
+        mask_upsample_stride: 2
+        ffn_act_cfg: 
+          type: ReLU
+          inplace: True
+        with_ffn: True
+        feat_transform_cfg:
+            conv_cfg: 
+              type: Conv2d
+              # act_cfg: None
+        kernel_updator_cfg:
+            type: KernelUpdator
+            in_channels: 256
+            feat_channels: 256
+            out_channels: 256
+            input_feat_shape: 3
+            act_cfg:
+              type: ReLU
+              inplace: True
+            norm_cfg: 
+              type: LN
+        loss_rank:
+            type: CrossEntropyLoss
+            use_sigmoid: False
+            loss_weight: 0.1
+        loss_mask:
+            type: CrossEntropyLoss
+            use_sigmoid: True
+            loss_weight: 1.0
+        loss_dice:
+            type: DiceLoss 
+            loss_weight: 4.0
+        loss_cls:
+            type: FocalLoss
+            use_sigmoid: True
+            gamma: 2.0
+            alpha: 0.25
+            loss_weight: 2.0
+
+      - type: KernelUpdateHead
+        num_classes: 133
+        num_ffn_fcs: 2
+        num_heads: 8
+        num_cls_fcs: 1
+        num_mask_fcs: 1
+        feedforward_channels: 2048
+        in_channels: 256
+        out_channels: 256
+        dropout: 0.0
+        mask_thr: 0.5
+        conv_kernel_size: 1
+        mask_upsample_stride: 2
+        ffn_act_cfg: 
+          type: ReLU
+          inplace: True
+        with_ffn: True
+        feat_transform_cfg:
+            conv_cfg: 
+              type: Conv2d
+              # act_cfg: None
+        kernel_updator_cfg:
+            type: KernelUpdator
+            in_channels: 256
+            feat_channels: 256
+            out_channels: 256
+            input_feat_shape: 3
+            act_cfg:
+              type: ReLU
+              inplace: True
+            norm_cfg: 
+              type: LN
+        loss_rank:
+            type: CrossEntropyLoss
+            use_sigmoid: False
+            loss_weight: 0.1
+        loss_mask:
+            type: CrossEntropyLoss
+            use_sigmoid: True
+            loss_weight: 1.0
+        loss_dice:
+            type: DiceLoss 
+            loss_weight: 4.0
+        loss_cls:
+            type: FocalLoss
+            use_sigmoid: True
+            gamma: 2.0
+            alpha: 0.25
+            loss_weight: 2.0
+
+      - type: KernelUpdateHead
+        num_classes: 133
+        num_ffn_fcs: 2
+        num_heads: 8
+        num_cls_fcs: 1
+        num_mask_fcs: 1
+        feedforward_channels: 2048
+        in_channels: 256
+        out_channels: 256
+        dropout: 0.0
+        mask_thr: 0.5
+        conv_kernel_size: 1
+        mask_upsample_stride: 2
+        ffn_act_cfg: 
+          type: ReLU
+          inplace: True
+        with_ffn: True
+        feat_transform_cfg:
+            conv_cfg: 
+              type: Conv2d
+              # act_cfg: None
+        kernel_updator_cfg:
+            type: KernelUpdator
+            in_channels: 256
+            feat_channels: 256
+            out_channels: 256
+            input_feat_shape: 3
+            act_cfg:
+              type: ReLU
+              inplace: True
+            norm_cfg: 
+              type: LN
+        loss_rank:
+            type: CrossEntropyLoss
+            use_sigmoid: False
+            loss_weight: 0.1
+        loss_mask:
+            type: CrossEntropyLoss
+            use_sigmoid: True
+            loss_weight: 1.0
+        loss_dice:
+            type: DiceLoss 
+            loss_weight: 4.0
+        loss_cls:
+            type: FocalLoss
+            use_sigmoid: True
+            gamma: 2.0
+            alpha: 0.25
+            loss_weight: 2.0
+
+  train_cfg:
+      rpn:
+          assigner:
+              type: MaskHungarianAssigner
+              cls_cost: 
+                  type: FocalLossCost
+                  weight: 2.0
+              dice_cost: 
+                  type: DiceCost
+                  weight: 4.0
+                  pred_act: True
+              mask_cost: 
+                  type: MaskCost
+                  weight: 1.0
+                  pred_act: True
+          sampler:
+              type: MaskPseudoSampler
+          pos_weight: 1
+      rcnn:
+          - assigner:
+                  type: MaskHungarianAssigner
+                  cls_cost: 
+                      type: FocalLossCost
+                      weight: 2.0
+                  dice_cost: 
+                      type: DiceCost
+                      weight: 4.0
+                      pred_act: True
+                  mask_cost: 
+                      type: MaskCost
+                      weight: 1.0
+                      pred_act: True
+            sampler: 
+                  type: MaskPseudoSampler
+            pos_weight: 1
+
+          # - asp_config:
+          - assigner:
+                  type: MaskHungarianAssigner
+                  cls_cost: 
+                      type: FocalLossCost
+                      weight: 2.0
+                  dice_cost: 
+                      type: DiceCost
+                      weight: 4.0
+                      pred_act: True
+                  mask_cost: 
+                      type: MaskCost
+                      weight: 1.0
+                      pred_act: True
+            sampler: 
+                  type: MaskPseudoSampler
+            pos_weight: 1
+
+          # - asp_config:
+          - assigner:
+                  type: MaskHungarianAssigner
+                  cls_cost: 
+                      type: FocalLossCost
+                      weight: 2.0
+                  dice_cost: 
+                      type: DiceCost
+                      weight: 4.0
+                      pred_act: True
+                  mask_cost: 
+                      type: MaskCost
+                      weight: 1.0
+                      pred_act: True
+            sampler: 
+                  type: MaskPseudoSampler
+            pos_weight: 1
+
+
+  test_cfg:
+      rpn: null
+      rcnn:
+          max_per_img: 100
+          mask_thr: 0.5
+          stuff_score_thr: 0.05
+          merge_stuff_thing:
+              overlap_thr: 0.6
+              iou_thr: 0.5
+              stuff_max_area: 4096
+              instance_score_thr: 0.3
+
+
+
+
+
+
+
+optimizer:
+  type: AdamW
+  weight_decay: 0.05
+  custom_cfg:
+    - name: backbone
+      lr_mult: 0.1
+  grad_clip_cfg:
+    name: ClipGradByNorm
+    clip_norm: 0.01
+
+lr_scheduler:
+  type: MultiStepDecay
+  learning_rate: 0.0001
+  milestones: [327778, 355092]
+  gamma: 0.1
+
+
+
+
+
+
+
+
+# --------------- False ---------------
+loss:
+  types:
+    - type: MaskFormerCombinedLoss
+      num_classes: *num_classes
+      weight_ce: 2.0
+      weight_mask: 5.0
+      weight_dice: 5.0
+      eos_coef: 0.1
+      num_points: 12544
+      oversample_ratio: 3.0
+      importance_sample_ratio: 0.75
+      ignore_index: *ignore_index
+  coef: [1]
+
+postprocessor:
+  type: MaskFormerPostprocessor
+  num_classes: *num_classes
+  object_mask_threshold: 0.8
+  overlap_threshold: 0.8
+  label_divisor: *label_divisor
+  ignore_index: *ignore_index

@@ -16,3 +16,4 @@ from .backbones import *
 from .losses import *
 from .panoptic_deeplab import PanopticDeepLab
 from .mask2former import Mask2Former
+from .knet import KNet
