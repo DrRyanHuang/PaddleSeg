@@ -2,12 +2,12 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-from _utils import multi_apply, reduce_mean, bias_init_with_prob, normal_init
-from base_layer import ConvModule
-from semantic_fpn_wrapper import SemanticFPNWrapper
-from __loss import build_loss
-from mask_hungarian_assigner import build_assigner
-from mask_pseudo_sampler import build_sampler
+from ._utils import multi_apply, reduce_mean, bias_init_with_prob, normal_init
+from .base_layer import ConvModule
+from .semantic_fpn_wrapper import SemanticFPNWrapper
+from .__loss import build_loss
+from .mask_hungarian_assigner import build_assigner
+from .mask_pseudo_sampler import build_sampler
 # from mmdet.core import build_assigner, build_sampler
 # from mmdet.models.builder import HEADS, build_loss, build_neck
 # from mmdet.models.losses import accuracy

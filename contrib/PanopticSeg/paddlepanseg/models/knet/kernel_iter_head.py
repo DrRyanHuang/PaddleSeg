@@ -4,8 +4,8 @@ import paddle.nn.functional as F
 
 from abc import ABCMeta, abstractmethod
 
-from mask_hungarian_assigner import build_assigner
-from mask_pseudo_sampler import build_sampler
+from .mask_hungarian_assigner import build_assigner
+from .mask_pseudo_sampler import build_sampler
 
 
 # A custom value to distinguish instance ID and category ID; need to
@@ -15,9 +15,9 @@ from mask_pseudo_sampler import build_sampler
 INSTANCE_OFFSET = 1000
 
 # from mmdet.models.builder import build_head
-from kernel_update_head import KernelUpdateHead
-from mask_pseudo_sampler import MaskPseudoSampler
-from base_layer import BaseModule
+from .kernel_update_head import KernelUpdateHead
+from .mask_pseudo_sampler import MaskPseudoSampler
+from .base_layer import BaseModule
 
 
 

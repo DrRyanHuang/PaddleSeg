@@ -4,7 +4,7 @@
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-from base_layer import ConvModule, BaseModule
+from .base_layer import ConvModule, BaseModule
 
 
 class FPN(BaseModule):

@@ -1,7 +1,7 @@
 import paddle
 import paddle.nn as nn
-from base_layer import ConvModule, BaseModule
-from _utils import normal_init
+from .base_layer import ConvModule, BaseModule
+from ._utils import normal_init
 import math
 # from mmcv.cnn.bricks.transformer import build_positional_encoding
 

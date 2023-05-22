@@ -804,7 +804,7 @@ if __name__ == "__main__":
     }
     
     model = ResNet(**res_config)
-    x = paddle.rand([2, 3, 224, 224])
+    x = paddle.rand([4, 3, 736, 1248])
     model.train()
     y = model(x)
     print(y)

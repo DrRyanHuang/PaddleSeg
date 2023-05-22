@@ -2,7 +2,7 @@
 import paddle
 import numpy.random as rng
 
-from util_mixins import NiceRepr
+from .util_mixins import NiceRepr
 
 
 class AssignResult(NiceRepr):

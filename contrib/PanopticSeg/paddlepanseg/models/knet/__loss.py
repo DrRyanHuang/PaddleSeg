@@ -584,8 +584,8 @@ class FocalLoss(nn.Layer):
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)
-        if self.use_sigmoid:
-            if self.activated:
+        if self.use_sigmoid: # True
+            if self.activated: # False
                 calculate_loss_func = py_focal_loss_with_prob
             else:
                 if pred.dim() == target.dim():

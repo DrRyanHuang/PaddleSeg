@@ -85,10 +85,10 @@ def sem2ins_masks(gt_sem_seg,
         masks.append(gt_sem_seg == i)
 
     if len(labels) > 0:
-        labels = paddle.stack(labels)
+        labels = paddle.concat(labels)
         masks = paddle.concat(masks)
     else:
-        labels = gt_sem_seg.new_zeros(size=[0])
-        masks = gt_sem_seg.new_zeros(
-            size=[0, gt_sem_seg.shape[-2], gt_sem_seg.shape[-1]])
+        labels = paddle.zeros(shape=[0]).cast(gt_sem_seg.dtype)
+        masks = paddle.zeros(
+            shape=[0, gt_sem_seg.shape[-2], gt_sem_seg.shape[-1]]).cast(gt_sem_seg.dtype)
     return labels.cast("int64"), masks.cast("float32")

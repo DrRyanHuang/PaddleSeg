@@ -8,7 +8,7 @@ import paddle.nn.functional as F
 
 import inspect
 
-from assign_result import AssignResult
+from .assign_result import AssignResult
 
 try:
     from scipy.optimize import linear_sum_assignment
@@ -414,7 +414,7 @@ class MaskHungarianAssigner(BaseAssigner):
         cost = cls_cost + reg_cost + dice_cost + b_cost
 
         # 3. do Hungarian matching on CPU using linear_sum_assignment
-        cost = cost.detach().cpu()
+        cost = cost.detach().cpu().numpy()
         if linear_sum_assignment is None:
             raise ImportError('Please run "pip install scipy" '
                               'to install scipy first.')

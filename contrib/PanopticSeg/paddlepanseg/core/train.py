@@ -168,7 +168,8 @@ def train(model,
                 else:
                     scaler.minimize(optimizer, scaled)  # Update parameters
             else:
-                net_out = ddp_model(images) if nranks > 1 else model(images)
+                # net_out = ddp_model(images) if nranks > 1 else model(images)
+                net_out = ddp_model(data) if nranks > 1 else model(**data)
                 loss_list = loss_computation(data, net_out, losses=losses)
                 loss = sum(loss_list)
                 loss.backward()

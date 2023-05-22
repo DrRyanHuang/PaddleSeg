@@ -9,7 +9,7 @@ import numpy as np
 
 # from ..builder import build_backbone, build_head, build_neck
 
-from base_layer import BaseModule
+from .base_layer import BaseModule
 
 
 class BaseDetector(BaseModule, metaclass=ABCMeta):
@@ -76,7 +76,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         # NOTE the batched image size information may be useful, e.g.
         # in DETR, this is needed for the construction of masks, which is
         # then used for the transformer_head.
-        batch_input_shape = tuple(imgs[0].size()[-2:])
+        batch_input_shape = tuple(imgs[0].shape[-2:])
         for img_meta in img_metas:
             img_meta['batch_input_shape'] = batch_input_shape
 
@@ -155,7 +155,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
             return self.aug_test(imgs, img_metas, **kwargs)
 
     # @auto_fp16(apply_to=('img', ))
-    def forward(self, img, img_metas, return_loss=True, **kwargs):
+    def forward(self, img, img_metas=None, return_loss=True, **kwargs):
         """Calls either :func:`forward_train` or :func:`forward_test` depending
         on whether ``return_loss`` is ``True``.
 
@@ -169,7 +169,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         #     assert len(img_metas) == 1
         #     return self.onnx_export(img[0], img_metas[0])
 
-        if return_loss:
+        if return_loss: # self.training
             return self.forward_train(img, img_metas, **kwargs)
         else:
             return self.forward_test(img, img_metas, **kwargs)

@@ -537,7 +537,7 @@ class ConvModule(nn.Layer):
         #     self.conv = nn.utils.spectral_norm(self.conv)
 
         # build normalization layers
-        if self.with_norm:
+        if self.with_norm: # False
             # norm layer is after conv layer
             if order.index('norm') > order.index('conv'):
                 norm_channels = out_channels

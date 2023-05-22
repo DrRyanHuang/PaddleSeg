@@ -5,9 +5,9 @@ import paddle.nn.functional as F
 
 # from mmcv.cnn.bricks.transformer import build_transformer_layer
 
-from base_layer import build_activation_layer, build_norm_layer, ConvModule, FFN, MultiheadAttention
-from _utils import multi_apply, reduce_mean, bias_init_with_prob
-from __loss import build_loss, accuracy
+from .base_layer import build_activation_layer, build_norm_layer, ConvModule, FFN, MultiheadAttention
+from ._utils import multi_apply, reduce_mean, bias_init_with_prob
+from .__loss import build_loss, accuracy
 
 # from kernel_update_head import KernelUpdator
 # from mmdet.models.losses import accuracy

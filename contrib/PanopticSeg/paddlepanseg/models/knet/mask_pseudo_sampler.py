@@ -4,8 +4,8 @@ import inspect
 from abc import ABCMeta, abstractmethod
 import numpy.random as rng
 
-from util_mixins import NiceRepr
-from assign_result import AssignResult
+from .util_mixins import NiceRepr
+from .assign_result import AssignResult
 # from mmdet.core.bbox import demodata
 
 
@@ -352,7 +352,7 @@ class MaskSamplingResult(SamplingResult):
                  gt_flags):
         self.pos_inds = pos_inds
         self.neg_inds = neg_inds
-        self.pos_masks = masks[pos_inds]
+        self.pos_masks = masks[pos_inds][None] if len(pos_inds) == 1 else masks[pos_inds]
         self.neg_masks = masks[neg_inds]
         self.pos_is_gt = gt_flags[pos_inds]
 
@@ -364,7 +364,7 @@ class MaskSamplingResult(SamplingResult):
             assert self.pos_assigned_gt_inds.numel().numpy().item() == 0
             self.pos_gt_masks = paddle.empty_like(gt_masks)
         else:
-            self.pos_gt_masks = gt_masks[self.pos_assigned_gt_inds]
+            self.pos_gt_masks = gt_masks[self.pos_assigned_gt_inds][None] if len(pos_inds) == 1 else gt_masks[self.pos_assigned_gt_inds]
 
         if assign_result.labels is not None:
             self.pos_gt_labels = assign_result.labels[pos_inds]

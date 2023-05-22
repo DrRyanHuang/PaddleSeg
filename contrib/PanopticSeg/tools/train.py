@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import argparse
-
+import sys; sys.path.append("/media/sama/1a5fa8d1-329c-4002-a483-843b52aaa0e9/Document/PaddleSeg")
 from paddleseg.utils import logger, utils
-
+sys.path.append("contrib/PanopticSeg")
 from paddlepanseg.core import train
 from paddlepanseg.cvlibs import Config, make_default_builder
 

@@ -114,7 +114,7 @@ class COCOStylePanopticDataset(PanopticDataset):
                  thing_ids=None,
                  num_classes=None,
                  ignore_index=255,
-                 separator=' ',
+                 separator='    ',
                  no_collation_keys=None):
         self.json_path = json_path
         super().__init__(
@@ -155,8 +155,16 @@ class COCOStylePanopticDataset(PanopticDataset):
                     image_path = os.path.join(self.dataset_root, items[0])
                     label_path = None
                 else:
-                    image_path = os.path.join(self.dataset_root, items[0])
-                    label_path = os.path.join(self.dataset_root, items[1])
+                    if os.path.exists(items[0]):
+                        image_path = items[0]
+                    else:
+                        image_path = os.path.join(self.dataset_root, items[0])
+                    
+                    if os.path.exists(items[1]):
+                        label_path = items[1]
+                    else:
+                        label_path = os.path.join(self.dataset_root, items[1])
+                        
                 image_id = self._get_image_id(image_path)
                 ann_info = ann_dict[image_id]
                 img_info = img_dict[image_id]
